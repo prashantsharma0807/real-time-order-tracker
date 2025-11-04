@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Order Tracker</title>
+  <!-- <script src="/socket.io/socket.io.js"></script> -->
+</head>
+<body style="font-family: sans-serif; text-align:center; margin-top:40px;">
+  <h2> Order Status Tracker</h2>
+
+  <input type="text" id="orderId" placeholder="Enter Order ID (e.g. 1001)" />
+  <button onclick="joinOrder()">Track Order</button>
+
+  <h3 id="status"></h3>
+
+  
+  <script src="/socket.io/socket.io.js"> </script>
+  <script>
+
+    const socket = io({
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: Infinity,
+    });
+  
+    let currentOrderId = null;
+  
+    socket.on("connect", () => {
+      console.log(" Connected:", socket.id);
+  
+      // Agar orderId already track ho rahi thi to reconnect ke baad room join
+      if (currentOrderId) {
+        socket.emit("joinOrderRoom", currentOrderId);
+        console.log(`Rejoined room: ${currentOrderId}`);
+      }
+    });
+  
+    socket.on("disconnect", () => {
+      console.log(" Disconnected:", socket.id);
+    });
+  
+    function joinOrder() {
+      const id = document.getElementById("orderId").value.trim();
+      if (!id) return alert("Enter Order ID first!");
+      currentOrderId = id;
+      socket.emit("joinOrderRoom", id);
+      document.getElementById("status").innerText = `Tracking order ${id}...`;
+      console.log(` Joined room: ${id}`);
+    }
+  
+    socket.on("orderStatus", (data) => {
+      console.log(" Received update:", data);
+      document.getElementById("status").innerText = `Order ${data.id} is now: ${data.status}`;
+    });
+  </script>
+  
+  
+  
+</body>
+</html>
